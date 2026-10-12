@@ -714,7 +714,7 @@ if __name__ == "__main__":
     try:
         ast, errs = parse_source(code4)
         assert len(errs) > 0, "Ожидалась синтаксическая ошибка"
-        print(f"[OK] Ошибка успешно перехвачена: {errs[0].message}")
+        print(f"[OK] Ошибка успешно перехвачена: {errs}")
     except Exception as e:
         print(f"[-] Ошибка: {e}")
 
@@ -728,7 +728,7 @@ if __name__ == "__main__":
     try:
         ast, errs = parse_source(code5)
         assert len(errs) > 0, "Ожидалась ошибка отсутствия точки с запятой"
-        print(f"[OK] Ошибка успешно перехвачена: {errs[0].message}")
+        print(f"[OK] Ошибка успешно перехвачена: {errs}")
     except Exception as e:
         print(f"[-] Ошибка: {e}")
 
@@ -737,7 +737,7 @@ if __name__ == "__main__":
     try:
         ast, errs = parse_source(code6)
         assert len(errs) == 1
-        print(f"[OK] Ошибка пустого ввода перехвачена: {errs[0].message}")
+        print(f"[OK] Ошибка пустого ввода перехвачена: {errs}")
     except Exception as e:
         print(f"[-] Ошибка: {e}")
 
