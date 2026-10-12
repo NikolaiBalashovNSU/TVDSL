@@ -1,0 +1,63 @@
+Program         ::= { FunctionDef | FormulaDef } ;
+
+FunctionDef     ::= "function" IDENT "(" [ ParamList ] ")" 
+                    [ RequiresClause ] 
+                    [ ReturnsClause ] 
+                    [ EnsuresClause ] 
+                    [ UsesClause ] 
+                    Block ;
+
+FormulaDef      ::= IDENT "(" [ ParamList ] ")" "=>" Condition ";" ;
+
+ParamList       ::= VarDef { "," VarDef } ;
+VarDef          ::= IDENT [ ":" Type ] ;
+Type            ::= "int" [ "[" "]" ] ;
+
+RequiresClause  ::= "requires" Condition ;
+ReturnsClause   ::= "returns" ParamList ;
+EnsuresClause   ::= "ensures" Condition ;
+UsesClause      ::= "uses" ParamList ;
+
+Block           ::= "{" { Statement } "}" ;
+
+Statement       ::= IfStmt 
+                  | WhileStmt 
+                  | AssertStmt 
+                  | AssumeStmt 
+                  | ReturnStmt 
+                  | AssignOrExprStmt ;
+
+IfStmt          ::= "if" "(" Condition ")" Block [ "else" ( IfStmt | Block ) ] ;
+WhileStmt       ::= "while" "(" Condition ")" [ "invariant" Condition ] Block ;
+AssertStmt      ::= "assert" Condition ";" ;
+AssumeStmt      ::= "assume" Condition ";" ;
+ReturnStmt      ::= "return" [ Condition ] ";" ;
+
+AssignOrExprStmt ::= Expr ( TupleAssignTail | AssignTail | StmtEnd ) ;
+TupleAssignTail  ::= "," IDENT { "," IDENT } "=" Expr ";" ;
+AssignTail       ::= "=" Expr ";" ;  (* Поддерживает как обычное присваивание, так и сахар a[i] = val *)
+StmtEnd          ::= ";" ;
+
+Condition       ::= Quantifier | Implication ;
+Quantifier      ::= ( "forall" | "exists" ) "(" VarDef "|" Condition ")" ;
+Implication     ::= OrExpr [ ( "->" | "=>" ) Implication ] ;
+
+OrExpr          ::= AndExpr { "or" AndExpr } ;
+AndExpr         ::= NotExpr { "and" NotExpr } ;
+NotExpr         ::= [ "not" ] EqualityExpr ;
+
+EqualityExpr    ::= AdditiveExpr { ( "==" | "!=" | "<" | ">" | "<=" | ">=" ) AdditiveExpr } ;
+AdditiveExpr    ::= MultiplicativeExpr { ( "+" | "-" ) MultiplicativeExpr } ;
+MultiplicativeExpr ::= UnaryExpr { ( "*" | "/" ) UnaryExpr } ;
+UnaryExpr       ::= [ "-" | "|" ] UnaryExpr | PostfixExpr ;
+
+PostfixExpr     ::= PrimaryExpr { CallSuffix | ArraySuffix } ;
+CallSuffix      ::= "(" [ Expr { "," Expr } ] ")" ;
+ArraySuffix     ::= "[" Condition "]" ;
+
+PrimaryExpr     ::= INT 
+                  | IDENT 
+                  | "true" 
+                  | "false" 
+                  | "length" "(" Expr ")" 
+                  | "(" Condition ")" ;
