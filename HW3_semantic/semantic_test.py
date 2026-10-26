@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
@@ -70,6 +71,7 @@ def run_tests():
         print(f"  --------------------------------------------------")
         
         ast, errors = analyze_source(code)
+        ast_dict = ast.to_dict()
         err_count = len(errors)
         
         is_ok = False
@@ -87,6 +89,8 @@ def run_tests():
                 print(f"    -> {e}")
         else:
             print("  Результат: Ошибок нет. Типы успешно проверены и выведены.")
+            json_ast = json.dumps(ast.to_dict(), indent=2, ensure_ascii=False)
+            print(json_ast)
 
         if is_ok:
             passed += 1

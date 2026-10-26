@@ -58,10 +58,15 @@ class ASTNode:
     def __init__(self, line=0, col=0):
         self.line = line
         self.col = col
+        self.inffered_type = None
 
     def to_dict(self):
         res = {"node_type": self.__class__.__name__, "line": self.line, "col": self.col}
+        if hasattr(self, 'inffered_type') and self.inffered_type is not None:
+            res["infered_type"] = str(self.inferred_type)
         for k, v in self.__dict__.items():
+            if k in ("line", "col", "inferred_type"):
+                continue
             if isinstance(v, ASTNode):
                 res[k] = v.to_dict()
             elif isinstance(v, list):

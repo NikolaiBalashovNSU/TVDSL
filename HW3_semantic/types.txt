@@ -1,0 +1,30 @@
+ТИПЫ
+- int: 32-битные целые числа
+- bool: логический тип (true, false)
+- int[]: одномерный целочисленный массив
+- (T1, T2, ...): кортеж возвращаемых значений функций
+
+ВЫРАЖЕНИЯ И ОПЕРАЦИИ
+- +, -, *, / : (int, int) -> int
+- - (унарный) : (int) -> int
+- not : (bool) -> bool
+- <, <=, >, >= : (int, int) -> bool
+- ==, != : (T, T) -> bool
+- and, or, -> : (bool, bool) -> bool
+- <arr>[<index>] : (int[], int) -> int
+- length(<arr>) : (int[]) -> int
+- forall(<id>: <type> | <bool>) : bool
+- exists(<id>: <type> | <bool>) : bool
+- <fn>(<args>) : проверка числа и типов параметров 
+
+КОНСТРУКЦИИ
+- function <id>(<params>) [requires <bool>] returns <returns> [ensures <bool>] [uses <vars>] <body>
+- <id>(<params>) => <bool>; (предикатные формулы)
+- { <stmt>* } (блочный оператор, локальная область видимости)
+- <id> = <expr>; (простое присваивание, вывод типа при первом появлении)
+- <id1>, <id2> = <call>(); (множественное присваивание из функции)
+- <id>[<int>] = <int>; (обновление элемента массива)
+- if (<bool>) <stmt> [else <stmt>]
+- while (<bool>) [invariant <bool>] <stmt>
+- assert <bool>;
+- assume <bool>;
