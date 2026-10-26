@@ -98,7 +98,7 @@ class SemanticAnalyzer:
                 for p_name, p_type_str in decl.params:
                     t = parse_type_str(p_type_str)
                     if t is None:
-                        self.error(f"Параметр '{p_name}' не имеет указанного типа")
+                        self.error(f"Параметр '{p_name}' не имеет указанного типа", decl.line, decl.col)
                         t = INT
                     params_types.append(t)
                 
@@ -107,7 +107,7 @@ class SemanticAnalyzer:
                     for r_name, r_type_str in decl.return_type:
                         t = parse_type_str(r_type_str)
                         if t is None:
-                            self.error(f"Возвращаемое значение '{r_name}' не имеет типа")
+                            self.error(f"Возвращаемое значение '{r_name}' не имеет типа", decl.line, decl.col)
                             t = INT
                         return_types.append(t)
                 elif decl.return_type:
@@ -116,7 +116,7 @@ class SemanticAnalyzer:
                         return_types.append(t)
 
                 if decl.name in self.globals:
-                    self.error(f"Повторное объявление функции '{decl.name}'")
+                    self.error(f"Повторное объявление функции '{decl.name}'", decl.line, decl.col)
                 else:
                     self.globals[decl.name] = FunctionSymbol(decl.name, params_types, return_types)
 
@@ -126,7 +126,7 @@ class SemanticAnalyzer:
                     t = parse_type_str(p_type_str) or INT
                     params_types.append(t)
                 if decl.name in self.globals:
-                    self.error(f"Повторное объявление формулы '{decl.name}'")
+                    self.error(f"Повторное объявление формулы '{decl.name}'", decl.line, decl.col)
                 else:
                     self.globals[decl.name] = FunctionSymbol(decl.name, params_types, [BOOL])
 
@@ -143,15 +143,15 @@ class SemanticAnalyzer:
         for p_name, p_type_str in func.params:
             t = parse_type_str(p_type_str) or INT
             if not scope.define(p_name, t):
-                self.error(f"Повторное объявление параметра '{p_name}' в функции '{func.name}'")
+                self.error(f"Повторное объявление параметра '{p_name}' в функции '{func.name}'", func.line, func.col)
 
         for u_name, u_type_str in func.uses:
             t = parse_type_str(u_type_str)
             if t is None:
-                self.error(f"Переменная в uses '{u_name}' не имеет типа")
+                self.error(f"Переменная в uses '{u_name}' не имеет типа", func.line, func.col)
                 t = INT
             if not scope.define(u_name, t):
-                self.error(f"Повторное объявление переменной '{u_name}' в uses")
+                self.error(f"Повторное объявление переменной '{u_name}' в uses", func.line, func.col)
 
         ret_types = []
         if isinstance(func.return_type, list):
@@ -159,7 +159,7 @@ class SemanticAnalyzer:
                 t = parse_type_str(r_type_str) or INT
                 ret_types.append(t)
                 if not scope.define(r_name, t):
-                    self.error(f"Повторное объявление возвращаемой переменной '{r_name}'")
+                    self.error(f"Повторное объявление возвращаемой переменной '{r_name}'", func.line, func.col)
         elif func.return_type:
             t = parse_type_str(func.return_type)
             if t:
@@ -170,12 +170,12 @@ class SemanticAnalyzer:
         if func.requires:
             req_t = self.analyze_expr(func.requires, scope)
             if req_t != BOOL:
-                self.error(f"Предусловие (requires) должно иметь тип bool, получен {req_t}")
+                self.error(f"Предусловие (requires) должно иметь тип bool, получен {req_t}", func.requires.line, func.requires.col)
 
         if func.ensures:
             ens_t = self.analyze_expr(func.ensures, scope)
             if ens_t != BOOL:
-                self.error(f"Постусловие (ensures) должно иметь тип bool, получен {ens_t}")
+                self.error(f"Постусловие (ensures) должно иметь тип bool, получен {ens_t}", func.ensures.line, func.ensures.col)
 
         self.analyze_block(func.body, scope)
 
@@ -184,11 +184,11 @@ class SemanticAnalyzer:
         for p_name, p_type_str in formula.params:
             t = parse_type_str(p_type_str) or INT
             if not scope.define(p_name, t):
-                self.error(f"Повторное объявление параметра '{p_name}' в формуле '{formula.name}'")
+                self.error(f"Повторное объявление параметра '{p_name}' в формуле '{formula.name}'", formula.line, formula.col)
         
         pred_t = self.analyze_expr(formula.predicate, scope)
         if pred_t != BOOL:
-            self.error(f"Предикат формулы '{formula.name}' должен иметь тип bool, получен {pred_t}")
+            self.error(f"Предикат формулы '{formula.name}' должен иметь тип bool, получен {pred_t}", formula.predicate.line, formula.predicate.col)
 
     def analyze_block(self, block: Block, parent_scope: SymbolTable):
         scope = SymbolTable(parent_scope)
@@ -199,7 +199,7 @@ class SemanticAnalyzer:
         if isinstance(stmt, IfStatement):
             cond_t = self.analyze_expr(stmt.condition, scope)
             if cond_t != BOOL:
-                self.error(f"Условие if должно иметь тип bool, получено {cond_t}")
+                self.error(f"Условие if должно иметь тип bool, получено {cond_t}", stmt.condition.line, stmt.condition.col)
             self.analyze_block(stmt.then_branch, scope)
             if stmt.else_branch:
                 if isinstance(stmt.else_branch, IfStatement):
@@ -210,22 +210,22 @@ class SemanticAnalyzer:
         elif isinstance(stmt, WhileStatement):
             cond_t = self.analyze_expr(stmt.condition, scope)
             if cond_t != BOOL:
-                self.error(f"Условие while должно иметь тип bool, получено {cond_t}")
+                self.error(f"Условие while должно иметь тип bool, получено {cond_t}", stmt.condition.line, stmt.condition.col)
             if stmt.invariant:
                 inv_t = self.analyze_expr(stmt.invariant, scope)
                 if inv_t != BOOL:
-                    self.error(f"Инвариант while должен иметь тип bool, получен {inv_t}")
+                    self.error(f"Инвариант while должен иметь тип bool, получен {inv_t}", stmt.invariant.line, stmt.invariant.col)
             self.analyze_block(stmt.body, scope)
 
         elif isinstance(stmt, AssertStatement):
             cond_t = self.analyze_expr(stmt.condition, scope)
             if cond_t != BOOL:
-                self.error(f"Утверждение assert должно иметь тип bool, получено {cond_t}")
+                self.error(f"Утверждение assert должно иметь тип bool, получено {cond_t}", stmt.condition.line, stmt.condition.col)
 
         elif isinstance(stmt, AssumeStatement):
             cond_t = self.analyze_expr(stmt.condition, scope)
             if cond_t != BOOL:
-                self.error(f"Предположение assume должно иметь тип bool, получено {cond_t}")
+                self.error(f"Предположение assume должно иметь тип bool, получено {cond_t}", stmt.condition.line, stmt.condition.col)
 
         elif isinstance(stmt, ReturnStatement):
             if stmt.expr:
@@ -233,21 +233,21 @@ class SemanticAnalyzer:
                 if self.current_func_returns and len(self.current_func_returns) == 1:
                     expected = self.current_func_returns[0]
                     if expr_t != expected:
-                        self.error(f"Несоответствие типа в return: ожидался {expected}, получен {expr_t}")
+                        self.error(f"Несоответствие типа в return: ожидался {expected}, получен {expr_t}", stmt.line, stmt.col)
             else:
                 if self.current_func_returns and len(self.current_func_returns) > 0:
-                    self.error("Функция должна возвращать значение")
+                    self.error("Функция должна возвращать значение", stmt.line, stmt.col)
 
         elif isinstance(stmt, Assign):
             val_t = self.analyze_expr(stmt.value, scope)
             if val_t == VOID:
-                self.error(f"Нельзя присвоить результат функции без возвращаемого значения переменной '{stmt.name}'")
+                self.error(f"Нельзя присвоить результат функции без возвращаемого значения переменной '{stmt.name}'", stmt.line, stmt.col)
                 val_t = INT
 
             existing_t = scope.lookup(stmt.name)
             if existing_t is not None:
                 if val_t != existing_t:
-                    self.error(f"Несоответствие типов при присваивании переменной '{stmt.name}': объявлен {existing_t}, присваивается {val_t}")
+                    self.error(f"Несоответствие типов при присваивании переменной '{stmt.name}': объявлен {existing_t}, присваивается {val_t}", stmt.line, stmt.col)
             else:
                 scope.define(stmt.name, val_t)
             stmt.inferred_type = val_t
@@ -273,7 +273,7 @@ class SemanticAnalyzer:
         elif isinstance(expr, Identifier):
             t = scope.lookup(expr.name)
             if t is None:
-                self.error(f"Использование необъявленной переменной '{expr.name}'")
+                self.error(f"Использование необъявленной переменной '{expr.name}'", expr.line, expr.col)
                 t = INT
             expr.inferred_type = t
             return t
@@ -284,22 +284,22 @@ class SemanticAnalyzer:
             op = expr.op
             if op in ('+', '-', '*', '/'):
                 if left_t != INT or right_t != INT:
-                    self.error(f"Операция '{op}' применима только к int, получены {left_t} и {right_t}")
+                    self.error(f"Операция '{op}' применима только к int, получены {left_t} и {right_t}", expr.line, expr.col)
                 expr.inferred_type = INT
                 return INT
             elif op in ('==', '!='):
                 if left_t != right_t:
-                    self.error(f"Сравнение '{op}' требует одинаковых типов, получены {left_t} и {right_t}")
+                    self.error(f"Сравнение '{op}' требует одинаковых типов, получены {left_t} и {right_t}", expr.line, expr.col)
                 expr.inferred_type = BOOL
                 return BOOL
             elif op in ('<', '>', '<=', '>='):
                 if left_t != INT or right_t != INT:
-                    self.error(f"Сравнение '{op}' применимо только к int, получены {left_t} и {right_t}")
+                    self.error(f"Сравнение '{op}' применимо только к int, получены {left_t} и {right_t}", expr.line, expr.col)
                 expr.inferred_type = BOOL
                 return BOOL
             elif op in ('and', 'or', '->', '=>'):
                 if left_t != BOOL or right_t != BOOL:
-                    self.error(f"Логическая операция '{op}' требует bool, получены {left_t} и {right_t}")
+                    self.error(f"Логическая операция '{op}' требует bool, получены {left_t} и {right_t}", expr.line, expr.col)
                 expr.inferred_type = BOOL
                 return BOOL
             else:
@@ -311,12 +311,12 @@ class SemanticAnalyzer:
             op = expr.op
             if op == '-':
                 if operand_t != INT:
-                    self.error(f"Унарный минус требует int, получен {operand_t}")
+                    self.error(f"Унарный минус требует int, получен {operand_t}", expr.line, expr.col)
                 expr.inferred_type = INT
                 return INT
             elif op == 'not':
                 if operand_t != BOOL:
-                    self.error(f"Оператор 'not' требует bool, получен {operand_t}")
+                    self.error(f"Оператор 'not' требует bool, получен {operand_t}", expr.line, expr.col)
                 expr.inferred_type = BOOL
                 return BOOL
             elif op == '|':
@@ -330,59 +330,59 @@ class SemanticAnalyzer:
             arr_t = self.analyze_expr(expr.array, scope)
             idx_t = self.analyze_expr(expr.index, scope)
             if idx_t != INT:
-                self.error(f"Индекс массива должен быть int, получен {idx_t}")
+                self.error(f"Индекс массива должен быть int, получен {idx_t}", expr.line, expr.col)
             if isinstance(arr_t, ArrayType):
                 expr.inferred_type = arr_t.element_type
                 return arr_t.element_type
             else:
-                self.error(f"Попытка индексации не-массива (тип {arr_t})")
+                self.error(f"Попытка индексации не-массива (тип {arr_t})", expr.line, expr.col)
                 expr.inferred_type = INT
                 return INT
 
         elif isinstance(expr, CallExpr):
             if expr.name == "__array_update__":
                 if len(expr.args) != 3:
-                    self.error("Внутренняя ошибка: __array_update__ требует 3 аргумента")
+                    self.error("Внутренняя ошибка: __array_update__ требует 3 аргумента", expr.line, expr.col)
                     expr.inferred_type = VOID
                     return VOID
                 arr_t = self.analyze_expr(expr.args[0], scope)
                 idx_t = self.analyze_expr(expr.args[1], scope)
                 val_t = self.analyze_expr(expr.args[2], scope)
                 if idx_t != INT:
-                    self.error(f"Индекс массива должен быть int, получен {idx_t}")
+                    self.error(f"Индекс массива должен быть int, получен {idx_t}", expr.line, expr.col)
                 if isinstance(arr_t, ArrayType):
                     if val_t != arr_t.element_type:
-                        self.error(f"Несоответствие типа при записи в массив: ожидался {arr_t.element_type}, получен {val_t}")
+                        self.error(f"Несоответствие типа при записи в массив: ожидался {arr_t.element_type}, получен {val_t}", expr.line, expr.col)
                 else:
-                    self.error(f"Обновление по индексу применимо только к массиву, получен {arr_t}")
+                    self.error(f"Обновление по индексу применимо только к массиву, получен {arr_t}", expr.line, expr.col)
                 expr.inferred_type = arr_t
                 return arr_t
 
             if expr.name == "length":
                 if len(expr.args) != 1:
-                    self.error("Функция length требует ровно 1 аргумент")
+                    self.error("Функция length требует ровно 1 аргумент", expr.line, expr.col)
                 else:
                     arg_t = self.analyze_expr(expr.args[0], scope)
                     if not isinstance(arg_t, ArrayType):
-                        self.error(f"Функция length применима только к массиву, получен {arg_t}")
+                        self.error(f"Функция length применима только к массиву, получен {arg_t}", expr.line, expr.col)
                 expr.inferred_type = INT
                 return INT
 
             func_sym = self.globals.get(expr.name)
             if not func_sym:
-                self.error(f"Вызов необъявленной функции '{expr.name}'")
+                self.error(f"Вызов необъявленной функции '{expr.name}'", expr.line, expr.col)
                 expr.inferred_type = INT
                 return INT
 
             if len(expr.args) != len(func_sym.params):
-                self.error(f"Функция '{expr.name}' ожидает {len(func_sym.params)} аргументов, передано {len(expr.args)}")
+                self.error(f"Функция '{expr.name}' ожидает {len(func_sym.params)} аргументов, передано {len(expr.args)}", expr.line, expr.col)
 
             for i, arg in enumerate(expr.args):
                 arg_t = self.analyze_expr(arg, scope)
                 if i < len(func_sym.params):
                     expected_t = func_sym.params[i]
                     if arg_t != expected_t:
-                        self.error(f"Несоответствие типа аргумента #{i+1} функции '{expr.name}': ожидался {expected_t}, получен {arg_t}")
+                        self.error(f"Несоответствие типа аргумента #{i+1} функции '{expr.name}': ожидался {expected_t}, получен {arg_t}", arg.line, arg.col)
 
             if len(func_sym.return_types) == 1:
                 res_t = func_sym.return_types[0]
@@ -401,7 +401,7 @@ class SemanticAnalyzer:
             q_scope.define(expr.var_name, var_t)
             pred_t = self.analyze_expr(expr.predicate, q_scope)
             if pred_t != BOOL:
-                self.error(f"Тело квантора '{expr.quantifier_type}' должно иметь тип bool, получено {pred_t}")
+                self.error(f"Тело квантора '{expr.quantifier_type}' должно иметь тип bool, получено {pred_t}", expr.line, expr.col)
             expr.inferred_type = BOOL
             return BOOL
 

@@ -55,8 +55,12 @@ def tokenize_with_hw1(code):
 
 
 class ASTNode:
+    def __init__(self, line=0, col=0):
+        self.line = line
+        self.col = col
+
     def to_dict(self):
-        res = {"node_type": self.__class__.__name__}
+        res = {"node_type": self.__class__.__name__, "line": self.line, "col": self.col}
         for k, v in self.__dict__.items():
             if isinstance(v, ASTNode):
                 res[k] = v.to_dict()
@@ -67,12 +71,14 @@ class ASTNode:
         return res
 
 class Program(ASTNode):
-    def __init__(self, declarations):
+    def __init__(self, declarations, line=0, col=0):
+        super().__init__(line, col)
         self.declarations = declarations
         self.functions = declarations
 
 class FunctionDef(ASTNode):
-    def __init__(self, name, params, return_type, requires, ensures, uses, body):
+    def __init__(self, name, params, return_type, requires, ensures, uses, body, line=0, col=0):
+        super().__init__(line, col)
         self.name = name
         self.params = params
         self.return_type = return_type
@@ -82,84 +88,100 @@ class FunctionDef(ASTNode):
         self.body = body
 
 class FormulaNode(ASTNode):
-    def __init__(self, name, params, predicate):
+    def __init__(self, name, params, predicate, line=0, col=0):
+        super().__init__(line, col)
         self.name = name
         self.params = params
         self.predicate = predicate
 
 class Literal(ASTNode):
-    def __init__(self, value):
+    def __init__(self, value, line=0, col=0):
+        super().__init__(line, col)
         self.value = value
 
 class Identifier(ASTNode):
-    def __init__(self, name):
+    def __init__(self, name, line=0, col=0):
+        super().__init__(line, col)
         self.name = name
 
 class BinaryOp(ASTNode):
-    def __init__(self, left, op, right):
+    def __init__(self, left, op, right, line=0, col=0):
+        super().__init__(line, col)
         self.left = left
         self.op = op
         self.right = right
 
 class UnaryOp(ASTNode):
-    def __init__(self, op, operand):
+    def __init__(self, op, operand, line=0, col=0):
+        super().__init__(line, col)
         self.op = op
         self.operand = operand
 
 class ArrayAccess(ASTNode):
-    def __init__(self, array, index):
+    def __init__(self, array, index, line=0, col=0):
+        super().__init__(line, col)
         self.array = array
         self.index = index
 
 class CallExpr(ASTNode):
-    def __init__(self, name, args):
+    def __init__(self, name, args, line=0, col=0):
+        super().__init__(line, col)
         self.name = name
         self.args = args
 
 class QuantifierNode(ASTNode):
-    def __init__(self, quantifier_type, var_name, var_type, predicate):
+    def __init__(self, quantifier_type, var_name, var_type, predicate, line=0, col=0):
+        super().__init__(line, col)
         self.quantifier_type = quantifier_type
         self.var_name = var_name
         self.var_type = var_type
         self.predicate = predicate
 
 class Block(ASTNode):
-    def __init__(self, statements):
+    def __init__(self, statements, line=0, col=0):
+        super().__init__(line, col)
         self.statements = statements
 
 class Assign(ASTNode):
-    def __init__(self, name, index, value):
+    def __init__(self, name, index, value, line=0, col=0):
+        super().__init__(line, col)
         self.name = name
         self.index = index
         self.value = value
 
 class TupleAssign(ASTNode):
-    def __init__(self, targets, call_expr):
+    def __init__(self, targets, call_expr, line=0, col=0):
+        super().__init__(line, col)
         self.targets = targets
         self.call_expr = call_expr
 
 class IfStatement(ASTNode):
-    def __init__(self, condition, then_branch, else_branch):
+    def __init__(self, condition, then_branch, else_branch, line=0, col=0):
+        super().__init__(line, col)
         self.condition = condition
         self.then_branch = then_branch
         self.else_branch = else_branch
 
 class WhileStatement(ASTNode):
-    def __init__(self, condition, invariant, body):
+    def __init__(self, condition, invariant, body, line=0, col=0):
+        super().__init__(line, col)
         self.condition = condition
         self.invariant = invariant
         self.body = body
 
 class AssertStatement(ASTNode):
-    def __init__(self, condition):
+    def __init__(self, condition, line=0, col=0):
+        super().__init__(line, col)
         self.condition = condition
 
 class AssumeStatement(ASTNode):
-    def __init__(self, condition):
+    def __init__(self, condition, line=0, col=0):
+        super().__init__(line, col)
         self.condition = condition
 
 class ReturnStatement(ASTNode):
-    def __init__(self, expr):
+    def __init__(self, expr, line=0, col=0):
+        super().__init__(line, col)
         self.expr = expr
 
 class ParserError(Exception):
@@ -283,7 +305,8 @@ class Parser:
         return (v_name, v_type)
 
     def parse_function(self):
-        self.consume('KW_FUNCTION')
+        f_token = self.consume('KW_FUNCTION')
+        f_line, f_col = f_token[2], f_token[3]
         name_token = self.consume('IDENT')
         
         self.consume('LPAREN')
@@ -329,10 +352,11 @@ class Parser:
                     break
 
         body = self.parse_block()
-        return FunctionDef(name_token[1], params, returns_defs or return_type, requires, ensures, uses, body)
+        return FunctionDef(name_token[1], params, returns_defs or return_type, requires, ensures, uses, body, line=f_line, col=f_col)
 
     def parse_formula(self):
-        name = self.consume('IDENT')[1]
+        name_token = self.consume('IDENT')
+        f_line, f_col = name_token[2], name_token[3]
         self.consume('LPAREN')
         params = []
         if self.peek() and self.peek()[0] != 'RPAREN':
@@ -347,9 +371,11 @@ class Parser:
         predicate = self.parse_condition()
         if self.peek() and self.peek()[0] == 'SEMICOLON':
             self.consume('SEMICOLON')
-        return FormulaNode(name, params, predicate)
+        return FormulaNode(name_token[1], params, predicate, line=f_line, col=f_col)
 
     def parse_block(self):
+        token = self.peek()
+        b_line, b_col = (token[2], token[3]) if token else (0, 0)
         self.consume('LBRACE')
         statements = []
         while self.peek() and self.peek()[0] != 'RBRACE':
@@ -359,7 +385,7 @@ class Parser:
                 self.errors.append(e)
                 self.panic_synchronize(self.STMT_SYNC)
         self.consume('RBRACE')
-        return Block(statements)
+        return Block(statements, line=b_line, col=b_col)
 
     def parse_statement(self):
         token = self.peek()
@@ -381,7 +407,7 @@ class Parser:
             return self.parse_assign_or_expr()
 
     def parse_if(self):
-        self.consume('KW_IF')
+        token = self.consume('KW_IF')
         self.consume('LPAREN')
         condition = self.parse_condition()
         self.consume('RPAREN')
@@ -394,10 +420,10 @@ class Parser:
                 else_branch = self.parse_if()
             else:
                 else_branch = self.parse_block()
-        return IfStatement(condition, then_branch, else_branch)
+        return IfStatement(condition, then_branch, else_branch, line=token[2], col=token[3])
 
     def parse_while(self):
-        self.consume('KW_WHILE')
+        token = self.consume('KW_WHILE')
         self.consume('LPAREN')
         condition = self.parse_condition()
         self.consume('RPAREN')
@@ -408,36 +434,36 @@ class Parser:
             invariant = self.parse_condition()
 
         body = self.parse_block()
-        return WhileStatement(condition, invariant, body)
+        return WhileStatement(condition, invariant, body, line=token[2], col=token[3])
 
     def parse_assert(self):
-        self.consume('KW_ASSERT')
+        token = self.consume('KW_ASSERT')
         expr = self.parse_condition()
         if self.peek() and self.peek()[0] == 'SEMICOLON':
             self.consume('SEMICOLON')
         else:
             t = self.peek()
             raise ParserError("Ожидалась ';'", t[2] if t else -1, t[3] if t else -1)
-        return AssertStatement(expr)
+        return AssertStatement(expr, line=token[2], col=token[3])
 
     def parse_assume(self):
-        self.consume('KW_ASSUME')
+        token = self.consume('KW_ASSUME')
         expr = self.parse_condition()
         if self.peek() and self.peek()[0] == 'SEMICOLON':
             self.consume('SEMICOLON')
         else:
             t = self.peek()
             raise ParserError("Ожидалась ';'", t[2] if t else -1, t[3] if t else -1)
-        return AssumeStatement(expr)
+        return AssumeStatement(expr, line=token[2], col=token[3])
 
     def parse_return(self):
-        self.consume('KW_RETURN')
+        token = self.consume('KW_RETURN')
         expr = None
         if self.peek() and self.peek()[0] not in ('SEMICOLON', 'RBRACE'):
             expr = self.parse_expr()
         if self.peek() and self.peek()[0] == 'SEMICOLON':
             self.consume('SEMICOLON')
-        return ReturnStatement(expr)
+        return ReturnStatement(expr, line=token[2], col=token[3])
 
     def parse_assign_or_expr(self):
         saved_pos = self.pos
@@ -456,7 +482,7 @@ class Parser:
                 call_expr = self.parse_expr()
                 if self.peek() and self.peek()[0] == 'SEMICOLON':
                     self.consume('SEMICOLON')
-                return TupleAssign(targets, call_expr)
+                return TupleAssign(targets, call_expr, line=t_line, col=t_col)
 
             if self.peek() and self.peek()[0] == 'ASSIGN':
                 self.consume('ASSIGN')
@@ -468,14 +494,15 @@ class Parser:
                     raise ParserError("Ожидалась ';'", t[2] if t else t_line, t[3] if t else t_col)
                     
                 if isinstance(expr, Identifier):
-                    return Assign(name=expr.name, index=None, value=value_expr)
+                    return Assign(name=expr.name, index=None, value=value_expr, line=t_line, col=t_col)
                 elif isinstance(expr, ArrayAccess):
                     if isinstance(expr.array, Identifier):
                         functional_update = CallExpr(
                             name="__array_update__",
-                            args=[expr.array, expr.index, value_expr]
+                            args=[expr.array, expr.index, value_expr],
+                            line=t_line, col=t_col
                         )
-                        return Assign(name=expr.array.name, index=None, value=functional_update)
+                        return Assign(name=expr.array.name, index=None, value=functional_update, line=t_line, col=t_col)
                     else:
                         raise ParserError("Слева от '=' должен быть идентификатор или элемент массива", t_line, t_col)
                 else:
@@ -491,13 +518,13 @@ class Parser:
     def parse_condition(self):
         token = self.peek()
         if token and token[0] == 'IDENT' and token[1] in ('forall', 'exists'):
-            q_type = self.consume()[1]
+            q_token = self.consume()
             self.consume('LPAREN')
             var_name, var_type = self.parse_variable_def()
             self.consume('PIPE')
             pred = self.parse_condition()
             self.consume('RPAREN')
-            return QuantifierNode(q_type, var_name, var_type, pred)
+            return QuantifierNode(q_token[1], var_name, var_type, pred, line=q_token[2], col=q_token[3])
         return self.parse_implication()
 
     def parse_implication(self):
@@ -505,7 +532,7 @@ class Parser:
         if self.peek() and self.peek()[0] == 'OP_ARROW_SINGLE':
             op_token = self.consume()
             right = self.parse_implication()
-            node = BinaryOp(node, op_token[1], right)
+            node = BinaryOp(node, op_token[1], right, line=node.line, col=node.col)
         return node
 
     def parse_or(self):
@@ -513,7 +540,7 @@ class Parser:
         while self.peek() and self.peek()[0] == 'IDENT' and self.peek()[1] == 'or':
             op_token = self.consume()
             right = self.parse_and()
-            node = BinaryOp(node, op_token[1], right)
+            node = BinaryOp(node, op_token[1], right, line=node.line, col=node.col)
         return node
 
     def parse_and(self):
@@ -521,14 +548,14 @@ class Parser:
         while self.peek() and self.peek()[0] == 'IDENT' and self.peek()[1] == 'and':
             op_token = self.consume()
             right = self.parse_not()
-            node = BinaryOp(node, op_token[1], right)
+            node = BinaryOp(node, op_token[1], right, line=node.line, col=node.col)
         return node
 
     def parse_not(self):
         if self.peek() and self.peek()[0] == 'IDENT' and self.peek()[1] == 'not':
             op_token = self.consume()
             operand = self.parse_not()
-            return UnaryOp(op_token[1], operand)
+            return UnaryOp(op_token[1], operand, line=op_token[2], col=op_token[3])
         return self.parse_equality()
 
     def parse_expr(self):
@@ -539,7 +566,7 @@ class Parser:
         while self.peek() and self.peek()[0] in ('OP_EQ', 'OP_NEQ', 'OP_LT', 'OP_GT', 'OP_LE', 'OP_GE'):
             op_token = self.consume()
             right = self.parse_additive()
-            node = BinaryOp(node, op_token[1], right)
+            node = BinaryOp(node, op_token[1], right, line=node.line, col=node.col)
         return node
 
     def parse_additive(self):
@@ -547,7 +574,7 @@ class Parser:
         while self.peek() and self.peek()[0] in ('OP_ADD', 'OP_SUB'):
             op_token = self.consume()
             right = self.parse_multiplicative()
-            node = BinaryOp(node, op_token[1], right)
+            node = BinaryOp(node, op_token[1], right, line=node.line, col=node.col)
         return node
 
     def parse_multiplicative(self):
@@ -555,14 +582,14 @@ class Parser:
         while self.peek() and self.peek()[0] in ('OP_MUL', 'OP_DIV'):
             op_token = self.consume()
             right = self.parse_unary()
-            node = BinaryOp(node, op_token[1], right)
+            node = BinaryOp(node, op_token[1], right, line=node.line, col=node.col)
         return node
 
     def parse_unary(self):
         if self.peek() and self.peek()[0] in ('OP_SUB', 'PIPE'):
             op_token = self.consume()
             operand = self.parse_unary()
-            return UnaryOp(op_token[1], operand)
+            return UnaryOp(op_token[1], operand, line=op_token[2], col=op_token[3])
         return self.parse_postfix()
 
     def parse_postfix(self):
@@ -585,7 +612,7 @@ class Parser:
                 self.consume('RPAREN')
                 
                 if isinstance(node, Identifier):
-                    node = CallExpr(node.name, args)
+                    node = CallExpr(node.name, args, line=node.line, col=node.col)
                 else:
                     raise ParserError("Ожидалось имя функции для вызова", t_line, t_col)
             
@@ -593,7 +620,7 @@ class Parser:
                 self.consume('LBRACKET')
                 index_expr = self.parse_condition()
                 self.consume('RBRACKET')
-                node = ArrayAccess(node, index_expr)
+                node = ArrayAccess(node, index_expr, line=node.line, col=node.col)
             else:
                 break
         return node
@@ -607,10 +634,10 @@ class Parser:
 
         if t_type == 'INT':
             self.consume('INT')
-            return Literal(int(t_val))
+            return Literal(int(t_val), line=t_line, col=t_col)
         elif t_type == 'IDENT' or t_type == 'KW_LENGTH':
             self.consume()
-            return Identifier(t_val)
+            return Identifier(t_val, line=t_line, col=t_col)
         elif t_type == 'LPAREN':
             self.consume('LPAREN')
             expr = self.parse_condition()
@@ -618,10 +645,10 @@ class Parser:
             return expr
         elif t_type == 'KW_TRUE':
             self.consume('KW_TRUE')
-            return Literal(True)
+            return Literal(True, line=t_line, col=t_col)
         elif t_type == 'KW_FALSE':
             self.consume('KW_FALSE')
-            return Literal(False)
+            return Literal(False, line=t_line, col=t_col)
         else:
             raise ParserError(f"Неожиданный токен в выражении: {t_type} ('{t_val}')", t_line, t_col)
 
@@ -636,127 +663,3 @@ def parse_source(code):
     
     parser = Parser(tokens)
     return parser.parse_program_with_recovery()
-
-if __name__ == "__main__":
-    print("\n[+] Тест 0: Проверка десахаризации обновления массива (функциональное копирование)")
-    code_arr = """
-    function test_arr(a: int[]) returns out: int[] {
-        a[0] = 42;
-        out = a;
-    }
-    """
-    ast, errs = parse_source(code_arr)
-    assert len(errs) == 0, f"Ошибки не ожидались: {errs}"
-    
-    stmt = ast.declarations[0].body.statements[0]
-    print(f"Тип узла присваивания: {type(stmt).__name__}")
-    print(f"Имя переменной: {stmt.name}")
-    print(f"Правая часть (вызов): {stmt.value.name}({[arg.value if isinstance(arg, Literal) else arg.name for arg in stmt.value.args]})")
-    print("[OK] Обновление массива успешно десахаризовано в чистую функциональную форму!")
-    print("\n[+] Тест 1: Позитивный (цикл с инвариантом)")
-    code1 = """
-    function sum_to_n(n: int) returns total: int
-    uses i: int
-    {
-        total = 0;
-        i = 0;
-        while (i < n) invariant i >= 0 and total >= 0 {
-            total = total + i;
-            i = i + 1;
-        }
-        assert total >= 0;
-    }
-    """
-    try:
-        ast, errs = parse_source(code1)
-        assert len(errs) == 0, f"Ошибки не ожидались: {errs}"
-        print("[OK] Разбор цикла с инвариантом прошел успешно!")
-        print("Пример AST в JSON:", json.dumps(ast.to_dict(), indent=2, ensure_ascii=False)[:300], "...")
-    except Exception as e:
-        print(f"[-] Ошибка: {e}")
-
-    print("\n[+] Тест 2: Позитивный (массивы и контракты)")
-    code2 = """
-    function update_array(a: int[], pos: int, val: int)
-        requires pos >= 0 and pos < length(a)
-        returns out: int[]
-        ensures out[pos] == val
-    {
-        a[pos] = val;
-        out = a;
-    }
-    """
-    try:
-        ast, errs = parse_source(code2)
-        assert len(errs) == 0, f"Ошибки не ожидались: {errs}"
-        print("[OK] Разбор массивов и контрактов прошел успешно!")
-    except Exception as e:
-        print(f"[-] Ошибка: {e}")
-
-    print("\n[+] Тест 3: Позитивный (формулы и кванторы)")
-    code3 = """
-    is_valid(n: int) => n >= 0;
-
-    function verify_elements(data: int[]) returns result: int {
-        assert exists(k: int | k >= 0 and data[k] == 0);
-        result = 1;
-    }
-    """
-    try:
-        ast, errs = parse_source(code3)
-        assert len(errs) == 0, f"Ошибки не ожидались: {errs}"
-        print("[OK] Разбор формул и кванторов прошел успешно!")
-    except Exception as e:
-        print(f"[-] Ошибка: {e}")
-
-    print("\n[+] Тест 4: Негативный (незакрытая скобка)")
-    code4 = "function compute_val(a: int returns res: int { res = a; }"
-    try:
-        ast, errs = parse_source(code4)
-        assert len(errs) > 0, "Ожидалась синтаксическая ошибка"
-        print(f"[OK] Ошибка успешно перехвачена: {errs}")
-    except Exception as e:
-        print(f"[-] Ошибка: {e}")
-
-    print("\n[+] Тест 5: Негативный (пропущенная точка с запятой)")
-    code5 = """
-    function get_val() returns v: int {
-        v = 100
-        assert v == 100;
-    }
-    """
-    try:
-        ast, errs = parse_source(code5)
-        assert len(errs) > 0, "Ожидалась ошибка отсутствия точки с запятой"
-        print(f"[OK] Ошибка успешно перехвачена: {errs}")
-    except Exception as e:
-        print(f"[-] Ошибка: {e}")
-
-    print("\n[+] Тест 6: Негативный (пустой ввод)")
-    code6 = "   "
-    try:
-        ast, errs = parse_source(code6)
-        assert len(errs) == 1
-        print(f"[OK] Ошибка пустого ввода перехвачена: {errs}")
-    except Exception as e:
-        print(f"[-] Ошибка: {e}")
-
-    print("\n[+] Тест 7: Режим паники (восстановление после ошибки)")
-    code7 = """
-    function broken_func(val: int) returns out: int {
-        out = #;
-        out = 42;
-    }
-    function correct_func(flag: int) returns status: int {
-        if flag > 0 { status = 1; } else { status = 0; }
-    }
-    """
-    try:
-        ast, errs = parse_source(code7)
-        assert len(errs) >= 1, f"Ожидались ошибки, получено {len(errs)}"
-        f_names = [d.name for d in ast.declarations if hasattr(d, "name")]
-        assert "correct_func" in f_names, "Парсер должен был восстановиться"
-        print(f"[OK] Паника обработана, получено ошибок: {len(errs)}, функции: {f_names}")
-    except Exception as e:
-        print(f"[-] Ошибка: {e}")
-
