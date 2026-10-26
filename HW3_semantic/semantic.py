@@ -92,7 +92,6 @@ class SemanticAnalyzer:
         self.errors.append(SemanticError(msg, line, col))
 
     def analyze(self, program: Program):
-        # Проход 1: Сбор сигнатур функций и формул
         for decl in program.declarations:
             if isinstance(decl, FunctionDef):
                 params_types = []
@@ -131,7 +130,6 @@ class SemanticAnalyzer:
                 else:
                     self.globals[decl.name] = FunctionSymbol(decl.name, params_types, [BOOL])
 
-        # Проход 2: Проверка тел функций и формул
         for decl in program.declarations:
             if isinstance(decl, FunctionDef):
                 self.analyze_function(decl)
@@ -251,7 +249,6 @@ class SemanticAnalyzer:
                 if val_t != existing_t:
                     self.error(f"Несоответствие типов при присваивании переменной '{stmt.name}': объявлен {existing_t}, присваивается {val_t}")
             else:
-                # Бонус: вывод типа локальной переменной по первому присваиванию
                 scope.define(stmt.name, val_t)
             stmt.inferred_type = val_t
 
