@@ -191,7 +191,6 @@ def optimize(func: IRFunc, flags: OptFlags = None):
     if flags is None:
         flags = OptFlags()  # все включены по умолчанию
     
-    # Разбиваем на блоки
     blocks, cur = [], []
     for i in func.instrs:
         cur.append(i)
@@ -204,17 +203,14 @@ def optimize(func: IRFunc, flags: OptFlags = None):
         const_map = {}
         opt_b = []
         
-        # === ПРОХОД 1: Const Prop + Folding + Algebraic ===
         for instr in block:
             if isinstance(instr, AssignOp):
-                # Constant Propagation
                 if flags.const_prop:
                     if isinstance(instr.l, (Var, Temp)) and instr.l.n in const_map: 
                         instr.l = Const(const_map[instr.l.n])
                     if isinstance(instr.r, (Var, Temp)) and instr.r.n in const_map: 
                         instr.r = Const(const_map[instr.r.n])
                 
-                # Constant Folding
                 if flags.const_prop and isinstance(instr.l, Const) and isinstance(instr.r, Const):
                     try: 
                         res = int(eval(f"{instr.l.v} {instr.op} {instr.r.v}"))
@@ -222,7 +218,6 @@ def optimize(func: IRFunc, flags: OptFlags = None):
                         const_map[instr.dst.n] = res
                     except: pass
                 
-                # Algebraic Simplification
                 if flags.algebraic and isinstance(instr, AssignOp):
                     if instr.op == '+' and isinstance(instr.r, Const) and instr.r.v == 0: 
                         instr = AssignVar(instr.dst, instr.l)
@@ -238,7 +233,6 @@ def optimize(func: IRFunc, flags: OptFlags = None):
                 
             opt_b.append(instr)
 
-        # === ПРОХОД 2: CSE ===
         cse_b = opt_b
         if flags.cse:
             available = {}
@@ -266,7 +260,6 @@ def optimize(func: IRFunc, flags: OptFlags = None):
 
         new_blocks.append(cse_b)
 
-    # Пересчёт all_used
     all_used = set()
     for block in new_blocks:
         for instr in block:
@@ -283,7 +276,6 @@ def optimize(func: IRFunc, flags: OptFlags = None):
                 for arg in instr.args:
                     if isinstance(arg, (Var, Temp)): all_used.add(arg.n)
 
-    # === ПРОХОД 3: DCE ===
     final_instrs = []
     for block in new_blocks:
         if flags.dce:

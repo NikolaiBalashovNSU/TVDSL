@@ -145,14 +145,12 @@ def run_tests(flags: OptFlags):
         print(f"  Аргументы: {args}")
         print(f"  --------------------------------------------------")
         
-        # 1. Семантический анализ
         ast, errors = analyze_source(code)
         if errors:
             print(f"  Ошибки семантического анализа: {errors}")
             failed += 1
             continue
         
-        # 2. Генерация IR
         gen = IRGenerator()
         funcs = gen.generate(ast)
         
@@ -164,30 +162,24 @@ def run_tests(flags: OptFlags):
         for instr in func.instrs:
             print(f"    {instr}")
         
-        # Метрики ДО
         instr_before = len(func.instrs)
         temps_before = sum(1 for i in func.instrs if hasattr(i, 'dst') and str(i.dst).startswith('t'))
         
-        # 3. Интерпретация ДО оптимизаций
         res_before = interpret(func, dict(args), funcs)
         print(f"  Результат ДО оптимизаций: {res_before}")
         
-        # 4. Применение оптимизаций с учётом флагов
         optimize(func, flags)
         
         print(f"  IR ПОСЛЕ оптимизаций:")
         for instr in func.instrs:
             print(f"    {instr}")
         
-        # Метрики ПОСЛЕ
         instr_after = len(func.instrs)
         temps_after = sum(1 for i in func.instrs if hasattr(i, 'dst') and str(i.dst).startswith('t'))
         
-        # 5. Интерпретация ПОСЛЕ оптимизаций
         res_after = interpret(func, dict(args), funcs)
         print(f"  Результат ПОСЛЕ оптимизаций: {res_after}")
         
-        # 6. Анализ живости и раскраска
         colors, graph = analyze_and_color(func)
         max_color = max(colors.values()) + 1 if colors else 0
         
@@ -198,7 +190,6 @@ def run_tests(flags: OptFlags):
         if colors:
             print(f"    Раскраска: {', '.join([f'{t}=R{c}' for t, c in sorted(colors.items())])}")
         
-        # === Сохранение раскраски в текстовый файл ===
         coloring_filename = os.path.join(coloring_dir, f"coloring_test{idx}_{func_name}.txt")
         with open(coloring_filename, "w", encoding="utf-8") as f:
             f.write(f"Функция: {func_name}\n")
@@ -216,7 +207,6 @@ def run_tests(flags: OptFlags):
                 f.write(f"  {t} -- {{{', '.join(neighbors) if neighbors else '-'}}}\n")
         print(f"  Раскраска сохранена в {coloring_filename}")
         
-        # === Сохранение графа конфликтов в DOT ===
         ig_filename = os.path.join(interference_dir, f"interference_graph_test{idx}_{func_name}.dot")
         with open(ig_filename, "w", encoding="utf-8") as f:
             f.write(f"graph InterferenceGraph_{func_name} {{\n")

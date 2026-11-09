@@ -1,8 +1,8 @@
 graph InterferenceGraph_cse_test {
   label="Interference Graph for cse_test\nColors used: 2";
   node [shape=circle];
-  t20 [style=filled, fillcolor=blue, label="t20\nR1"];
-  t21 [style=filled, fillcolor=red, label="t21\nR0"];
+  t20 [style=filled, fillcolor=red, label="t20\nR0"];
+  t21 [style=filled, fillcolor=blue, label="t21\nR1"];
   t22 [style=filled, fillcolor=red, label="t22\nR0"];
   t23 [style=filled, fillcolor=red, label="t23\nR0"];
   t24 [style=filled, fillcolor=red, label="t24\nR0"];
