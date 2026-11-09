@@ -189,7 +189,7 @@ class OptFlags:
 
 def optimize(func: IRFunc, flags: OptFlags = None):
     if flags is None:
-        flags = OptFlags()  # все включены по умолчанию
+        flags = OptFlags()
     
     blocks, cur = [], []
     for i in func.instrs:

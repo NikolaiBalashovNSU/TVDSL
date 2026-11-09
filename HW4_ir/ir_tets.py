@@ -45,7 +45,6 @@ def run_tests(flags: OptFlags):
     print(f"Флаги оптимизаций: {flags}")
     print()
     
-    # === Создаём папку для выходных файлов ===
 
     cfg_dir = os.path.join(current_dir, "cfg")
     os.makedirs(cfg_dir, exist_ok=True)
