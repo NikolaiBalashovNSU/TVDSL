@@ -1,0 +1,7 @@
+graph InterferenceGraph_loop {
+  label="Interference Graph for loop\nColors used: 1";
+  node [shape=circle];
+  t11 [style=filled, fillcolor=red, label="t11\nR0"];
+  t12 [style=filled, fillcolor=red, label="t12\nR0"];
+  t13 [style=filled, fillcolor=red, label="t13\nR0"];
+}

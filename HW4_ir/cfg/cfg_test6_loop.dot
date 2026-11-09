@@ -1,0 +1,15 @@
+digraph CFG_loop {
+  B0 [label="B0\nsum = 0\ni = 0\nL1:", shape=box];
+  B0 -> B1;
+  B1 [label="B1\nt11 = i < n\nif t11 goto L2", shape=box];
+  B1 -> B2;
+  B1 -> B3;
+  B2 [label="B2\ngoto L3", shape=box];
+  B2 -> B5;
+  B3 [label="B3\nL2:", shape=box];
+  B3 -> B4;
+  B4 [label="B4\nt12 = sum + i\nsum = t12\nt13 = i + 1\ni = t13\ngoto L1", shape=box];
+  B5 [label="B5\nL3:", shape=box];
+  B5 -> B6;
+  B6 [label="B6\nres = sum\nreturn res", shape=box];
+}

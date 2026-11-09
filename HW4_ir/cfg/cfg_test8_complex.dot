@@ -1,0 +1,3 @@
+digraph CFG_complex {
+  B0 [label="B0\nt16 = 15\na = t16\nt17 = a\nb = t17\nt18 = 0\nc = t18\nt19 = b + c\nres = t19\nreturn res", shape=box];
+}

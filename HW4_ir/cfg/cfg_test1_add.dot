@@ -1,0 +1,3 @@
+digraph CFG_add {
+  B0 [label="B0\nt1 = a + b\nres = t1\nreturn res", shape=box];
+}

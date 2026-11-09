@@ -1,0 +1,5 @@
+graph InterferenceGraph_compute {
+  label="Interference Graph for compute\nColors used: 1";
+  node [shape=circle];
+  t3 [style=filled, fillcolor=red, label="t3\nR0"];
+}

@@ -1,0 +1,3 @@
+digraph CFG_compute {
+  B0 [label="B0\nt3 = 20\nres = t3\nreturn res", shape=box];
+}

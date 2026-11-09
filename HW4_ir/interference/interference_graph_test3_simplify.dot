@@ -1,0 +1,9 @@
+graph InterferenceGraph_simplify {
+  label="Interference Graph for simplify\nColors used: 1";
+  node [shape=circle];
+  t4 [style=filled, fillcolor=red, label="t4\nR0"];
+  t5 [style=filled, fillcolor=red, label="t5\nR0"];
+  t6 [style=filled, fillcolor=red, label="t6\nR0"];
+  t7 [style=filled, fillcolor=red, label="t7\nR0"];
+  t8 [style=filled, fillcolor=red, label="t8\nR0"];
+}

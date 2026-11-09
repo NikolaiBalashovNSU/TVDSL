@@ -1,0 +1,3 @@
+digraph CFG_cse_test {
+  B0 [label="B0\nt20 = x + y\na = t20\nt21 = t20\nb = t21\nt22 = t20\nc = t22\nt23 = a + b\nt24 = t23 + c\nres = t24\nreturn res", shape=box];
+}

@@ -1,0 +1,5 @@
+graph InterferenceGraph_dce_test {
+  label="Interference Graph for dce_test\nColors used: 1";
+  node [shape=circle];
+  t9 [style=filled, fillcolor=red, label="t9\nR0"];
+}

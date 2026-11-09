@@ -1,0 +1,5 @@
+graph InterferenceGraph_add {
+  label="Interference Graph for add\nColors used: 1";
+  node [shape=circle];
+  t1 [style=filled, fillcolor=red, label="t1\nR0"];
+}

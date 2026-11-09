@@ -1,0 +1,15 @@
+digraph CFG_branch {
+  B0 [label="B0\nt10 = n > 0\nif t10 goto L1", shape=box];
+  B0 -> B1;
+  B0 -> B2;
+  B1 [label="B1\ngoto L3", shape=box];
+  B1 -> B4;
+  B2 [label="B2\nL1:", shape=box];
+  B2 -> B3;
+  B3 [label="B3\nres = 10\ngoto L2", shape=box];
+  B4 [label="B4\nL3:", shape=box];
+  B4 -> B5;
+  B5 [label="B5\nres = 20\nL2:", shape=box];
+  B5 -> B6;
+  B6 [label="B6\nreturn res", shape=box];
+}

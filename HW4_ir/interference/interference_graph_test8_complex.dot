@@ -1,0 +1,8 @@
+graph InterferenceGraph_complex {
+  label="Interference Graph for complex\nColors used: 1";
+  node [shape=circle];
+  t16 [style=filled, fillcolor=red, label="t16\nR0"];
+  t17 [style=filled, fillcolor=red, label="t17\nR0"];
+  t18 [style=filled, fillcolor=red, label="t18\nR0"];
+  t19 [style=filled, fillcolor=red, label="t19\nR0"];
+}

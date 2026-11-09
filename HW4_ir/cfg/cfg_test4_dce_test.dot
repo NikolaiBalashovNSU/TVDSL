@@ -1,0 +1,3 @@
+digraph CFG_dce_test {
+  B0 [label="B0\nt9 = n + 1\nres = t9\nreturn res", shape=box];
+}

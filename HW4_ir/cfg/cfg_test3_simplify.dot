@@ -1,0 +1,3 @@
+digraph CFG_simplify {
+  B0 [label="B0\nt4 = x\na = t4\nt5 = x\nb = t5\nt6 = 0\nc = t6\nt7 = a + b\nt8 = t7 + c\nres = t8\nreturn res", shape=box];
+}
